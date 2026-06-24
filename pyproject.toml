@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "daatypes"
+version = "0.1.0"
+description = "i simulate datatypes that i find useful"
+readme = "readme.md"
+license = "MIT"
+requires-python = ">=3.10"
+
+authors = [
+    { name = "deftasparagusanaconda" }
+]
+
+keywords = [
+    "math",
+    "numerical",
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Mathematics",   
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)"   
+]
+
+[project.urls]
+Homepage = "https://github.com/deftasparagusanaconda/daatypes"
+Repository = "https://github.com/deftasparagusanaconda/daatypes"
+Issues = "https://github.com/deftasparagusanaconda/daatypes/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/daatypes"]
