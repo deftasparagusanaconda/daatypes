@@ -1,12 +1,143 @@
-import collections, math, daacorations
-from collections.abc import Sequence, MutableSequence, Mapping, MutableMapping, Iterable, Hashable, Container
-from itertools import pairwise, cycle
+from __future__ import annotations
+import math, collections, numbers
+from daacorations import pretty_repr
+from typing import Any, Literal
 from numbers import Integral, Rational
-from frozendefaultdict import frozendefaultdict
-from fractions import Fraction
-from typing import Literal
 from functools import cached_property
+from itertools import pairwise, cycle
+from fractions import Fraction
+from abc import abstractmethod
+from frozendefaultdict import frozendefaultdict
 from collections import defaultdict
+from collections.abc import Hashable, MutableMapping
+from frozendict import frozendict
+from frozendefaultdict import HashableMapping
+
+# numbers ----------------------------------------------------------------------
+
+class Natural(numbers.Integral):
+    'a non-negative integer'
+
+    def __init__(self, value: Integral):
+        if value < 0 or not isinstance(value, Integral):
+            raise ValueError('must be a non-negative integer')
+        self.value: Integral = value
+
+    def __add__(self, other) -> Natural:
+        return type(self)(self.value + other.value)
+    def __sub__(self, other) -> Natural:
+        if other.value > self.value:
+            raise OutOfDomainError('')
+        return type(self)(self.value - other.value)
+    def __mul__(self, other) -> Natural:
+        return type(self)(self.value * other.value)
+    def __truediv__(self, other) -> Natural | Rational:
+        if self.value % other.value == 0:
+            return type(self)(self.value // other.value)
+        else:
+            return Fraction(self.value, other.value)
+    def __pow__(self, other) -> Natural:
+        if self.value == 0 and other.value == 0:
+            raise ArithmeticError('0 ** 0 is not defined')
+        return Natural(self.value ** other.value)
+    def __radd__(self, other) -> Natural:
+        return Natural(self.value + other.value)
+    def __rsub__(self, other) -> Natural:
+        return Natural(self.value + other.value)
+    def __rmul__(self, other) -> Natural:
+        return Natural(self.value + other.value)
+    def __rdiv__(self, other) -> Natural:
+        return Natural(self.value + other.value)
+    def __rpow__(self, other) -> Natural:
+        return Natural(self.value + other.value)
+
+    __repr__ = pretty_repr
+
+class Cardinal:
+    'a number that represents the size/cardinality of a set'
+
+    ALEPH_NULL = object()
+
+    def __init__(self, value: Natural | Literal[ALEPH_NULL]):
+        self.value: Natural | Literal[ALEPH_NULL] = value
+
+    __repr__ = pretty_repr
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+# collections ------------------------------------------------------------------
+
+class Sized:
+    'like collections.abc.Sized but properly allowing cardinal number sizes instead of just non-negative integer sizes. thus, infinite collections of different cardinalities are possible'
+    @abstractmethod
+    def __len__(self) -> Cardinal:
+        ...
+
+    __repr__ = pretty_repr
+
+class IterableContainer(collections.abc.Iterable, collections.abc.Container):
+    'an iterable container with rich mixins: count, filter, __contains__. can be applied to Collection, Sequence, Set, and any other ABCs that derive both Iterable and Container.'
+    
+    def count(self, stuff: Set[Any], complement: bool = False) -> Natural:
+        '"how many things of stuff does this sequence have?"'
+        return sum(thing not in stuff for thing in self) if complement else sum(thing in stuff for thing in self)
+    
+    def filter(self, stuff: Set[Any], complement: bool = False) -> Sequence[Any]:
+        '"things of this sequence which are in stuff"'
+        return type(self)((thing for thing in self if thing not in stuff) if complement else (thing for thing in self if thing in stuff))
+    
+    def __contains__(self, thing) -> bool:
+        return any(thing2 in thing for thing2 in self)
+
+    __repr__ = pretty_repr
+
+class Collection(Sized, IterableContainer):
+    'like collections.abc.Collection but allows infinite len and has rich mixins (from IterableContainer)'
+    ...
+
+class Set(Collection):
+    """an interface for datatypes that represent a set: a collection of unique elements"""
+
+class Mapping(Collection):
+    ...
+
+class Function(Collection):
+    """an object that maps elements from the domain set to the codomain set. 
+
+    __len__ returns how many pairs are defined on the function."""
+
+    def __init__(self, domain: Set[Any], codomain: Set[Any], pairs: Mapping[Any, Any]):
+        self.domain: Set[Any] = domain
+        self.codomain: Set[Any] = codomain
+        self.pairs: Mapping[Any, Any] = pairs
+
+    @property
+    def is_total(self):
+        return self.domain == self.pairs.keys()
+
+class Sequence(Collection):
+    ...
+    
+class _CyclicView:
+    def __init__(self, sequence: Sequence):
+        self.sequence = Sequence
+
+    def __getitem__(self, index: int | slice) -> Any:
+        match index:
+            case int(): return self.sequence[index % len(self)]
+            case slice(): return type(self.sequence)(self[i % len(self)] for i in range(*index))
+            case _: raise IndexError('index must be int or slice')
+
+    def __len__(self) -> int:
+        return len(self.sequence)
+
+    __repr__ = pretty_repr
+
+# there are two kinds of sequences i recognize: if the domain is dense, a .cover cannot be defined. if the domain is not dense, a .cover can be defined, and you can traverse more easily.
+#
+# a sequence is a triple: (domain, function, codomain), where:
+# domain is a . if it is    not dense, a cover can be defined, and the sequence can be traversed easily
 
 class Wheel(collections.abc.Iterator):
     """a wheel for generating primes. its iterator returns the residues of the given wheel size. you get diminishing returns as you go up in size:
@@ -61,9 +192,9 @@ class Wheel(collections.abc.Iterator):
         self.candidate += next(self.cycle)
         return self.candidate
 
-    __repr__ = daacorations.pretty_repr
+    __repr__ = pretty_repr
 
-class PrimesIterableContainer(Iterable, Container):
+class PrimesIterableContainer(IterableContainer):
     """a singleton class representing the infinite sequence of prime numbers. you can do things like:
     
     Primes = PrimeSequence()
@@ -148,7 +279,7 @@ class PrimesIterableContainer(Iterable, Container):
 
         return self._cache.index(number)
 
-    __repr__ = daacorations.pretty_repr
+    __repr__ = pretty_repr
 
 Primes = PrimesIterableContainer()
 
@@ -277,10 +408,8 @@ class Monzo(Hashable, Sequence):#, Rational):
     def __hash__(self) -> int:
         return hash(Fraction(self))
 
-    __repr__ = daacorations.pretty_repr
-
+    __repr__ = pretty_repr
     def __str__(self) -> str:
         return '[' + ' '.join(str(exponent) for exponent in self) + '⟩'
 
 Rational.register(Monzo)
-

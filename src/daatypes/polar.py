@@ -1,6 +1,10 @@
-from numbers import Complex
+from numbers import Complex, Rational
+from dataclasses import dataclass
 
+@dataclass
 class Polar(Complex):
-    def __init__(self, magnitude: Rational, angle: Rational):
-        self.magnitude: Rational = magnitude
-        self.angle: Rational = angle
+    magnitude: Rational
+    angle: Rational
+
+    
+

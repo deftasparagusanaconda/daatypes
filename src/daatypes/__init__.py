@@ -20,9 +20,12 @@ from .uqint import UQInt
 # can also do saturating and modular arithmetic
 from .qint import QInt 
 
-# an IEEE 754 binary/decimal float
-# represents the binary/decimal rationals, plus wierd IEEE 754 arithmetic
-from .float import Float 
+# scientific notation in arbitrary radix
+# represents the rational numbers
+from .float import Float, ieee_binary, ieee_decimal, f16, f32, f64, f128, f256, d32, d64, d128
+
+# fixed point numbers
+from .fixed import Fixed
 
 # a composed datatype
 # two arrays of int primes[] and int exponents[]
@@ -42,8 +45,28 @@ from .interval import Interval
 # conducive to tolerance-aware arithmetic with accurate tolerance
 from .ball import Ball 
 
+# vectors of real numbers ------------------------------------------------------
+
+from .vector import Vector
+
+# represents the real numbers
+from .real import Real
+
 # a composed datatype
-# an ordered pair of (qint magnitude, float angle)
+# represents the complexes in cartesian form
+from .comp import Comp
+
+# a composed datatype
+# represents the quaternions in cartesian form
+from .quat import Quat
+
+# a composed datatype
+# represents the quaternions in cartesian form
+from .octo import Octo
+
+# a composed datatype
+# an ordered pair of (qint magnitude, float angle) where angle is from real axis to imaginary axis
 # represents the complex numbers
 # conducive to slow additive but fast multiplicative arithmetic, and uniform angle precision
 from .polar import Polar
+
