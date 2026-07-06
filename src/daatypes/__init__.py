@@ -20,18 +20,21 @@ from .uqint import UQInt
 # can also do saturating and modular arithmetic
 from .qint import QInt 
 
+# fixed point numbers
+from .fixed import Fixed
+
 # scientific notation in arbitrary radix
 # represents the rational numbers
 from .float import Float, ieee_binary, ieee_decimal, f16, f32, f64, f128, f256, d32, d64, d128
-
-# fixed point numbers
-from .fixed import Fixed
 
 # a composed datatype
 # two arrays of int primes[] and int exponents[]
 # represents the rationals 
 # conducive to slow additive but fast multiplicative arithmetic
 from .monzo import Monzo 
+
+# (simple)? continued fraction
+from .cf import CF, SCF
 
 # a composed datatype
 # an ordered pair of (any lower, any upper)
@@ -70,3 +73,6 @@ from .octo import Octo
 # conducive to slow additive but fast multiplicative arithmetic, and uniform angle precision
 from .polar import Polar
 
+# optimization -----------------------------------------------------------------
+
+from .pareto_front import ParetoFront

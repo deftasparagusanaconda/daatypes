@@ -68,9 +68,9 @@ class Float(Rational):
     ---------------
     when printing to another radix, if input radix and output radix are coprime, you need to specify precision to the equivalent of the input radix. 
     """
-    radix: int
-    precision: int
     significand: int
+    precision: int
+    radix: int
     exponent: int
 
     @property
@@ -103,13 +103,20 @@ class Float(Rational):
         return cls(radix=radix, precision=precision, significand=significand, exponent=exponent)
     
     @classmethod
-    def from_rational(cls, rational: Rational, *, radix: None | int = None, precision: None | int = None) -> Float:
-        if radix is None:
-            # infer radix 
-            ... 
-        if precision is None:
-            # infer precision
-            ...
+    def from_rational(cls, rational: Rational, *, radix: int, precision: int) -> Float:
+        signum = (rational > 0) - (rational < 0)
+
+        significand = abs(rational)
+        exponent = 0
+
+        # get exponent
+        while significand >= radix:
+            exponent += 1
+            significand /= radix
+        
+        # get significand
+        
+        significand = Fixed.from_rational(significand)
         
         return cls(radix=radix, precision=precision, significand=significand, exponent=exponent)
     
@@ -141,15 +148,9 @@ class Float(Rational):
     def __float__(self) -> builtins.float:
         return builtins.float(self.as_fraction())
 
-    def __str__(self, *, radix: int = 10, exponent_marker: str = 'e', alphabet: str = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz') -> str:
-        return fraction_to_radix(
-            numerator = self.numerator,
-            denominator = self.denominator,
-            radix = radix,
-            alphabet = alphabet)
+    def __str__(self, *, radix: int = 10, exponent_marker: str = 'e') -> str:
+        return f'{self.significand} * {self.radix} ** {self.exponent}'
     
-    str = __str__
-
     __repr__ = daacorations.pretty_repr
 
 def ieee_binary(bits: int) -> type:

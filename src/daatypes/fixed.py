@@ -1,9 +1,11 @@
+from __future__ import annotations
 from stringman.unicode import to_subscript
 from numbers import Rational, Integral
 from collections.abc import Sequence, MutableSequence, Iterable
 from typing import Literal
 from dataclasses import dataclass, field
 from itertools import chain, cycle, repeat
+from fractions import Fraction
 import math
 
 @dataclass(kw_only = True)
@@ -44,6 +46,7 @@ class Fixed(Rational):
     @property
     def right_repetend(self):
         return () if self.right_repeat is None else self.right[self.right_repeat:]
+
     @property
     def left_iterable(self) -> Iterable:
         yield from self.left_preperiod
@@ -155,19 +158,39 @@ class Fixed(Rational):
             (digit * self.radix ** i for i, digit in enumerate(self.left, start = 0)),
             (digit * self.radix ** -i for i, digit in enumerate(self.right, start = 1))))
 
-    def __str__(self, char_set = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ') -> str:
-        return ''.join(chain(
-            {-1: '−', 0: '', +1: '+'}[self.signum],
-            '(',
-            (char_set[digit] for digit in reversed(self.left_repetend)) if self.left_repeat is not None else '0',
-            ')',
-            (char_set[digit] for digit in reversed(self.left_preperiod)),
-            '.',
-            (char_set[digit] for digit in self.right_preperiod),
-            '(',
-            (char_set[digit] for digit in self.right_repetend) if self.right_repeat is not None else '0',
-            ')',
-            to_subscript(str(self.radix))))
+    def __str__(self, 
+                char_set = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 
+                left_precision: None | int = None, 
+                right_precision: None | int = None
+        ) -> str:
+
+        sign: str = {-1: '−', 0: '', +1: '+'}[self.signum]
+        
+        if left_precision is not None:
+            if self.left_repeat is None:
+                # left terminates
+                left: str = ''.join(char_set[digit] for digit in reversed(self.left_preperiod))
+            else:
+                # left has repeating digits
+                left: str = ...
+        else:
+            repetend: str = ''.join(char_set[digit] for digit in reversed(self.left_repetend)) if len(self.left_repetend) != 0 else '0'
+            preperiod: str = ''.join(char_set[digit] for digit in reversed(self.left_preperiod))
+            left: str = '(' + repetend + ')' + preperiod
+
+        if right_precision is not None:
+            if self.right_repeat is None:
+                # right terminates
+                right: str = ''.join(char_set[digit] for digit in self.right_preperiod)
+            else:
+                # right has repeating digits
+                right: str = ...
+        else:
+            repetend: str = ''.join(char_set[digit] for digit in self.right_repetend) if len(self.right_repetend) != 0 else '0'
+            preperiod: str = ''.join(char_set[digit] for digit in self.right_preperiod)
+            right: str = preperiod + '(' + repetend + ')'
+     
+        return f'{sign}{left}.{right}'
 
 def round_expansion(integral, fractional, radix, tie):
     'round a positional number'
